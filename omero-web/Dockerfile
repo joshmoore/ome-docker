@@ -36,6 +36,25 @@ USER omero
 ENV HOME /home/omero
 WORKDIR /home/omero
 
-ADD ./download.sh /home/omero/download.sh
+#################################
 
-CMD bash -C '/home/omero/download.sh https://ci.openmicroscopy.org/job/OMERO-DEV-merge-build/ICE=3.5,jdk=8_LATEST,label=octopus/lastSuccessfulBuild/artifact/src/target/OMERO.py-5.2.1-534-6ee6dde-ice35-b233.zip';'bash'
+## Testing
+ADD ./download.sh /home/omero/download.sh
+RUN /home/omero/download.sh https://ci.openmicroscopy.org/job/OMERO-DEV-merge-build/ICE=3.5,jdk=8_LATEST,label=octopus/lastSuccessfulBuild/artifact/src/target/OMERO.py-5.2.1-534-6ee6dde-ice35-b233.zip
+ENTRYPOINT bash
+# docker build -t ola .
+# docker run -ti --rm -p 8080:8080 ola
+
+## Jenkins
+ENV JENKINS_SWARM_VERSION 1.24
+
+RUN adduser -u 1000 slave
+USER slave
+WORKDIR /tmp
+RUN curl --create-dirs -sSLo /tmp/swarm-client-$JENKINS_SWARM_VERSION-jar-with-dependencies.jar http://maven.jenkins-ci.org/content/repositories/releases/org/jenkins-ci/plugins/swarm-client/$JENKINS_SWARM_VERSION/swarm-client-$JENKINS_SWARM_VERSION-jar-with-dependencies.jar
+
+COPY jenkins-slave.sh /tmp/jenkins-slave.sh
+ENTRYPOINT ["/tmp/jenkins-slave.sh"]
+
+##
+# CMD bash -C '/home/omero/download.sh https://ci.openmicroscopy.org/job/OMERO-DEV-merge-build/ICE=3.5,jdk=8_LATEST,label=octopus/lastSuccessfulBuild/artifact/src/target/OMERO.py-5.2.1-534-6ee6dde-ice35-b233.zip';'bash'
